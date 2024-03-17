@@ -1,155 +1,141 @@
-//Global Constants, Values, and Arrays
-
-const suits = ["♣", "♠", "♥", "♦"];
-const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-let player1Deck, player2Deck;
-const CARD_VALUES = {
-    '2': 2,
-    '3': 3,
-    '4': 4,
-    '5': 5,
-    '6': 6,
-    '7': 7,
-    '8': 8,
-    '9': 9,
-    '10': 10,
-    'J': 11,
-    'Q': 12,
-    'K': 13,
-    'A': 14
-};
-let player1Card
-let player2Card
-let player1DeckCount =''
-let player2DeckCount = ''
-let roundCount = ''
-let reshuffleCount = ''
-let reRoundCount = ''
-// Classes
-
-class Deck {
-    constructor(cards = deckOne()) {     // cards equal the function so that the cards passing through don't create a new deck for every card
-        this.cards = cards
-    }
-    pop() {
-        return this.cards.shift();
-    }
-    push(card) {
-        this.cards.push(card);
-    }
-    shuffle() {     // use the de-facto unbiased shuffle algorithm called the Fisher-Yates (aka Knuth) Shuffle.
-        let currentIndex = this.cards.length,  randomIndex;
-        while (currentIndex > 0) {     // While there remain elements to shuffle.
-          randomIndex = Math.floor(Math.random() * currentIndex);     // Pick a remaining element.
-          currentIndex--;
-          [this.cards[currentIndex], this.cards[randomIndex]] = [     // And swap it with the current element.
-            this.cards[randomIndex], this.cards[currentIndex]];
-        }
-        return this.cards;
-      }
-}
-
+// Class representing a playing card
 class Card {
-    constructor (suit, value) {
-        this.suit = suit
-        this.value = value
-    }
-    describe() {
-        return `${this.value} of ${this.suit}`;
-    }
-} 
+  constructor(suit, rank) {
+      this.suit = suit; // Suit of the card
+      this.rank = rank; // Rank of the card
+  }
 
-// Major Functions
-
-document.addEventListener('click', () => {     //start a new game with every click on the webpage
-    startGame();
-    })
-
-
-startGame()
-function startGame() {
-    console.log(`New Game!`);
-    roundCount = 0     //needed to include these for the 'click' startGame(); it would not reset, so I ensured the count was back at zero at start
-    reshuffleCount = 0
-    reRoundCount = 0
-    let deck = new Deck();
-    deck.shuffle();
-    let deckMidpoint = Math.ceil(deck.cards.length / 2);
-    player1Deck = new Deck (deck.cards.slice(0, deckMidpoint));     //determining the player's decks by slicing the OG deck in half
-    player2Deck = new Deck (deck.cards.slice(deckMidpoint, deck.cards.length));
-    checkCards();     //starts the loop between checkCards() and nextRound()
+  // Method to represent the card as a string
+  toString() {
+      return `${this.rank} of ${this.suit}`;
+  }
 }
 
-function nextRound() {     //a natural win happens once ever 10 or so games, otherwise, the reshuffle limit forces the game to finish
-    if (player1Deck.cards.length == 0 || player2Deck.cards.length == 0 || reshuffleCount == 5) {     //had to have a limit, so added a reshuffle
-        declareWinner();     //declares winner if any of the above conditions have been met 
-    } else if (reRoundCount == 300) {
-        player1Deck.shuffle();     //shuffles the player's decks, in case there is a draw loop happening, or other reason
-        player2Deck.shuffle();
-        reshuffleCount++;     //reshuffle count referenced earlier. created because it was easily exceeding the console's capacity
-        reRoundCount = 0;     // restarting the reRound count, counts the rounds between when the decks are reshuffled
-        checkCards();
-    } else {
-        checkCards();
-    }
+// Class representing a deck of cards
+class Deck {
+  constructor() {
+      this.cards = []; // Array to store cards in the deck
+  }
+
+  // Method to initialize the deck with standard 52 cards
+  initialize() {
+      const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']; // Possible suits
+      const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace']; // Possible ranks
+
+      // Generating all possible cards and adding them to the deck
+      for (const suit of suits) {
+          for (const rank of ranks) {
+              this.cards.push(new Card(suit, rank));
+          }
+      }
+  }
+
+  // Method to shuffle the cards in the deck
+  shuffle() {
+      // Fisher-Yates shuffle algorithm
+      for (let i = this.cards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]]; // Swapping cards
+      }
+  }
+
+  // Method to deal a card from the top of the deck
+  dealCard() {
+      return this.cards.pop(); // Removing and returning the last card in the deck
+  }
 }
 
-function checkCards() {
-    roundCount++;     //increases the roundcount by 1
-    reRoundCount++;     // increases the reRoundCount by 1
-    let player1Card = player1Deck.pop();    //references the pop() function in the Deck Class
-    let player2Card = player2Deck.pop();
-    if (CARD_VALUES[player1Card.value] > CARD_VALUES[player2Card.value]) {     //Player1 Wins
-        player1Deck.push(player1Card);      //pushes the cards to player 1 when they win
-        player1Deck.push(player2Card);
-        console.log(`Player 1 Wins`);
-    } else if (CARD_VALUES[player1Card.value] < CARD_VALUES[player2Card.value]){     //Player2 Wins
-        player2Deck.push(player1Card);
-        player2Deck.push(player2Card) ;   
-        console.log(`Player 2 Wins`) ;   
-    }else {     //draw
-        player1Deck.push(player1Card);     //returns cards to the bottom of their decks in a draw
-        player2Deck.push(player2Card);
-        console.log(`Draw`);
-    }
+// Class representing a player
+class Player {
+  constructor(name) {
+      this.name = name; // Name of the player
+      this.hand = []; // Array to store player's hand of cards
+  }
 
-    console.log(`
-    Round: ${roundCount}
-    Player 1: ${player1Card.describe()}
-    Deck: ${player1Deck.cards.length}
-    -------------
-    Player 2: ${player2Card.describe()}
-    Deck: ${player2Deck.cards.length}
-    
-    `)
-    nextRound();     //sends back to the nextRound to determine how to proceed
+  // Method to add a card to the player's hand
+  addCard(card) {
+      this.hand.push(card);
+  }
+
+  // Method to play a card from the player's hand
+  playCard() {
+      return this.hand.pop(); // Removing and returning the last card in the player's hand
+  }
 }
 
+// Class representing a game of cards
+class Game {
+  constructor(player1Name, player2Name) {
+      this.player1 = new Player(player1Name); // First player
+      this.player2 = new Player(player2Name); // Second player
+      this.deck = new Deck(); // Deck of cards
+  }
 
+  // Method to start the game
+  startGame() {
+      this.deck.initialize(); // Initializing the deck
+      this.deck.shuffle(); // Shuffling the deck
 
-//Reference Functions
+      // Dealing cards to each player until the deck is empty
+      while (this.deck.cards.length > 0) {
+          this.player1.addCard(this.deck.dealCard());
+          this.player2.addCard(this.deck.dealCard());
+      }
 
-function declareWinner() {
-    if (player1Deck.cards.length > player2Deck.cards.length) {     //utilizing the value of the deck amount to determine winners
-        console.log(`
-        After ${roundCount} rounds,
-        Player 1 Wins the War!`);
+      this.playRound(); // Starting the first round
+  }
 
-    } else if (player1Deck.cards.length < player2Deck.cards.length) {
-        console.log(`
-        After ${roundCount} rounds,
-        Player 2 Wins the War!`);
-    } else {
-        console.log(`
-        After ${roundCount} rounds, 
-        It's a Draw! No one Wins the War!`)
-    }
+  // Method to play a round of the game
+  playRound() {
+      const card1 = this.player1.playCard(); // Player 1 plays a card
+      const card2 = this.player2.playCard(); // Player 2 plays a card
+
+      // Displaying the cards played by each player
+      console.log(`${this.player1.name} plays: ${card1}`);
+      console.log(`${this.player2.name} plays: ${card2}`);
+
+      this.compareCards(card1, card2); // Comparing the cards played
+  }
+
+  // Method to compare the cards played in a round
+  compareCards(card1, card2) {
+      const rank1 = card1.rank; // Rank of card played by player 1
+      const rank2 = card2.rank; // Rank of card played by player 2
+
+      // Determining the winner of the round
+      if (rank1 === rank2) {
+          console.log('It\'s a tie!');
+      } else if (rank1 > rank2) {
+          console.log(`${this.player1.name} wins the round!`);
+          this.player1.addCard(card1);
+          this.player1.addCard(card2);
+      } else {
+          console.log(`${this.player2.name} wins the round!`);
+          this.player2.addCard(card1);
+          this.player2.addCard(card2);
+      }
+
+      // Checking if both players have cards remaining
+      if (this.player1.hand.length > 0 && this.player2.hand.length > 0) {
+          this.playRound(); // Playing the next round
+      } else {
+          this.endGame(); // Ending the game if a player runs out of cards
+      }
+  }
+
+  // Method to end the game and determine the winner
+  endGame() {
+      // Comparing the number of cards each player has
+      if (this.player1.hand.length > this.player2.hand.length) {
+          console.log(`${this.player1.name} wins the game!`);
+      } else if (this.player2.hand.length > this.player1.hand.length) {
+          console.log(`${this.player2.name} wins the game!`);
+      } else {
+          console.log('It\'s a tie!');
+      }
+  }
 }
 
-function deckOne() {
-    return suits.flatMap(suit => {    // flatmap maps all array elements within it to create a new, singular, flat array, without it there would be 4 arrays
-        return values.map(value => {     // here, the values are looped through to create an array
-            return new Card(suit, value);     // new card is created for every mapped element, with a suit, and a value applied to it
-        })
-    })
-}
+// Example usage
+const game = new Game('Player 1', 'Player 2'); // Creating a new game instance with two players
+game.startGame(); // Starting the game
